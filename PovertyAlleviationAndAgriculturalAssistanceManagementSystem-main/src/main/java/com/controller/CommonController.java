@@ -60,7 +60,6 @@ public class CommonController{
 		Map<String, String> map = BaiduUtil.getCityByLonLat(BAIDU_DITU_AK, lng, lat);
 		return R.ok().put("data", map);
 	}
-	
 	/**
 	 * 人脸比对
 	 * 

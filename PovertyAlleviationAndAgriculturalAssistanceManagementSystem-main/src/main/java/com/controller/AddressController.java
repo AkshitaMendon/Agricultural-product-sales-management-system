@@ -43,8 +43,8 @@ import com.utils.CommonUtil;
  * @email 
  * @date 2021-04-18 15:18:18
  */
-@RestController
-@RequestMapping("/address")
+
+
 public class AddressController {
     @Autowired
     private AddressService addressService;
@@ -82,25 +82,20 @@ public class AddressController {
 	/**
      * 列表
      */
-    @RequestMapping("/lists")
-    public R list( AddressEntity address){
-       	EntityWrapper<AddressEntity> ew = new EntityWrapper<AddressEntity>();
-      	ew.allEq(MPUtil.allEQMapPre( address, "address")); 
-        return R.ok().put("data", addressService.selectListView(ew));
-    }
+	@RequestMapping("/listOrQuery")
+	public R listOrQuery(AddressEntity address, @RequestParam(required = false) boolean isView) {
+		EntityWrapper<AddressEntity> ew = new EntityWrapper<>();
+		ew.allEq(MPUtil.allEQMapPre(address, "address"));
+		if (isView) {
+			AddressView addressView = addressService.selectView(ew);
+			return R.ok().put("data", addressView);
+		} else {
+			return R.ok().put("data", addressService.selectListView(ew));
+		}
+	}
 
-	 /**
-     * 查询
-     */
-    @RequestMapping("/query")
-    public R query(AddressEntity address){
-        EntityWrapper< AddressEntity> ew = new EntityWrapper< AddressEntity>();
- 		ew.allEq(MPUtil.allEQMapPre( address, "address")); 
-		AddressView addressView =  addressService.selectView(ew);
-		return R.ok("查询地址成功").put("data", addressView);
-    }
-	
-    /**
+
+	/**
      * 后端详情
      */
     @RequestMapping("/info/{id}")
@@ -117,45 +112,42 @@ public class AddressController {
         AddressEntity address = addressService.selectById(id);
         return R.ok().put("data", address);
     }
-    
+	private void prepareAddress(AddressEntity address, HttpServletRequest request) {
+		address.setId(generateUniqueId());
+		Long userId = (Long) request.getSession().getAttribute("userId");
+		address.setUserid(userId);
+		if ("是".equals(address.getIsdefault())) {
+			addressService.updateForSet("isdefault='否'", new EntityWrapper<AddressEntity>().eq("userid", userId));
+		}
+	}
+
+	private long generateUniqueId() {
+		return new Date().getTime() + (long) Math.floor(Math.random() * 1000);
+	}
 
 
 
-    /**
+
+
+	/**
      * 后端保存
      */
-    @RequestMapping("/save")
-    public R save(@RequestBody AddressEntity address, HttpServletRequest request){
-    	address.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
-    	//ValidatorUtils.validateEntity(address);
-    	address.setUserid((Long)request.getSession().getAttribute("userId"));
-		Long userId = (Long)request.getSession().getAttribute("userId");
-    	if(address.getIsdefault().equals("是")) {
-    		addressService.updateForSet("isdefault='否'", new EntityWrapper<AddressEntity>().eq("userid", userId));
-    	}
-    	address.setUserid(userId);
-        addressService.insert(address);
-        return R.ok();
-    }
-    
-    /**
-     * 前端保存
-     */
-    @RequestMapping("/add")
-    public R add(@RequestBody AddressEntity address, HttpServletRequest request){
-    	address.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
-    	//ValidatorUtils.validateEntity(address);
-    	address.setUserid((Long)request.getSession().getAttribute("userId"));
-		Long userId = (Long)request.getSession().getAttribute("userId");
-    	if(address.getIsdefault().equals("是")) {
-    		addressService.updateForSet("isdefault='否'", new EntityWrapper<AddressEntity>().eq("userid", userId));
-    	}
-    	address.setUserid(userId);
-        addressService.insert(address);
-        return R.ok();
-    }
+	@RequestMapping("/save")
+	public R save(@RequestBody AddressEntity address, HttpServletRequest request) {
+		prepareAddress(address, request);
+		addressService.insert(address);
+		return R.ok();
+	}
 
-    /**
+	@RequestMapping("/add")
+	public R add(@RequestBody AddressEntity address, HttpServletRequest request) {
+		prepareAddress(address, request);
+		addressService.insert(address);
+		return R.ok();
+	}
+
+
+	/**
      * 修改
      */
     @RequestMapping("/update")

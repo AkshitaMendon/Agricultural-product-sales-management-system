@@ -1,14 +1,7 @@
 package com.controller;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 
 import com.utils.ValidatorUtils;
@@ -48,35 +41,43 @@ import com.utils.CommonUtil;
 public class ShangpinController {
     @Autowired
     private ShangpinService shangpinService;
-    
+	private static final int RANDOM_MULTIPLIER=1000;
+
+	private PageUtils getPageUtils(Map<String, Object> params, ShangpinEntity shangpin) {
+		EntityWrapper<ShangpinEntity> ew = new EntityWrapper<ShangpinEntity>();
+		return shangpinService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, shangpin), params), params));
+	}
+
+	public R page(@RequestParam Map<String, Object> params, ShangpinEntity shangpin, HttpServletRequest request) {
+		// Step 1: Build query wrapper
+		EntityWrapper<ShangpinEntity> wrapper = buildQueryWrapper(params, shangpin);
+
+		// Step 2: Fetch paginated results
+		PageUtils page = shangpinService.queryPage(params, wrapper);
+
+		// Step 3: Return response
+		return R.ok().put("data", page);
+	}
+
+	// Helper method for building query wrapper
+	private EntityWrapper<ShangpinEntity> buildQueryWrapper(Map<String, Object> params, ShangpinEntity shangpin) {
+		EntityWrapper<ShangpinEntity> wrapper = new EntityWrapper<>();
+		wrapper = (EntityWrapper<ShangpinEntity>) MPUtil.likeOrEq(wrapper, shangpin); // Apply LIKE/EQ
+		wrapper = (EntityWrapper<ShangpinEntity>) MPUtil.between(wrapper, params);   // Apply BETWEEN
+		wrapper = (EntityWrapper<ShangpinEntity>) MPUtil.sort(wrapper, params);      // Apply Sorting
+		return wrapper;
+	}
 
 
-    /**
-     * 后端列表
-     */
-    @RequestMapping("/page")
-    public R page(@RequestParam Map<String, Object> params,ShangpinEntity shangpin,
-		HttpServletRequest request){
-		String tableName = request.getSession().getAttribute("tableName").toString();
-		if(tableName.equals("dianjia")) {
-			shangpin.setDianjiaming((String)request.getSession().getAttribute("username"));
-		}
-        EntityWrapper<ShangpinEntity> ew = new EntityWrapper<ShangpinEntity>();
-		PageUtils page = shangpinService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, shangpin), params), params));
-
-        return R.ok().put("data", page);
-    }
-    
-    /**
-     * 前端列表
-     */
+	/**
+	 * 前端列表
+	 */
 	@IgnoreAuth
-    @RequestMapping("/list")
-    public R list(@RequestParam Map<String, Object> params,ShangpinEntity shangpin, HttpServletRequest request){
-        EntityWrapper<ShangpinEntity> ew = new EntityWrapper<ShangpinEntity>();
-		PageUtils page = shangpinService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, shangpin), params), params));
-        return R.ok().put("data", page);
-    }
+	@RequestMapping("/list")
+	public R list(@RequestParam Map<String, Object> params, ShangpinEntity shangpin, HttpServletRequest request) {
+		PageUtils page = getPageUtils(params, shangpin);
+		return R.ok().put("data", page);
+	}
 
 	/**
      * 列表
@@ -141,34 +142,31 @@ public class ShangpinController {
     /**
      * 后端保存
      */
-    @RequestMapping("/save")
-    public R save(@RequestBody ShangpinEntity shangpin, HttpServletRequest request){
-    	shangpin.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
-    	//ValidatorUtils.validateEntity(shangpin);
-        shangpinService.insert(shangpin);
-        return R.ok();
-    }
-    
-    /**
-     * 前端保存
-     */
-    @RequestMapping("/add")
-    public R add(@RequestBody ShangpinEntity shangpin, HttpServletRequest request){
-    	shangpin.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
-    	//ValidatorUtils.validateEntity(shangpin);
-        shangpinService.insert(shangpin);
-        return R.ok();
-    }
+	@RequestMapping("/save")
+	public R save(@RequestBody ShangpinEntity shangpin, HttpServletRequest request) {
+		shangpin.setId(generateUniqueId());
+		shangpinService.insert(shangpin);
+		return R.ok();
+	}
+
+	/**
+	 * 前端保存
+	 */
+	@RequestMapping("/add")
+	public R add(@RequestBody ShangpinEntity shangpin, HttpServletRequest request) {
+		shangpin.setId(generateUniqueId());
+		shangpinService.insert(shangpin);
+		return R.ok();
+	}
 
     /**
      * 修改
      */
-    @RequestMapping("/update")
-    public R update(@RequestBody ShangpinEntity shangpin, HttpServletRequest request){
-        //ValidatorUtils.validateEntity(shangpin);
-        shangpinService.updateById(shangpin);//全部更新
-        return R.ok();
-    }
+	private Long generateUniqueId() {
+		long currentTime = new Date().getTime();
+		double randomValue = Math.floor(Math.random() * RANDOM_MULTIPLIER);
+		return currentTime + new Double(randomValue).longValue();
+	}
     
 
     /**
@@ -184,11 +182,11 @@ public class ShangpinController {
      * 提醒接口
      */
 	@RequestMapping("/remind/{columnName}/{type}")
-	public R remindCount(@PathVariable("columnName") String columnName, HttpServletRequest request, 
+	public R remindCount(@PathVariable("columnName") String columnName, HttpServletRequest request,
 						 @PathVariable("type") String type,@RequestParam Map<String, Object> map) {
 		map.put("column", columnName);
 		map.put("type", type);
-		
+
 		if(type.equals("2")) {
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			Calendar c = Calendar.getInstance();
@@ -196,7 +194,7 @@ public class ShangpinController {
 			Date remindEndDate = null;
 			if(map.get("remindstart")!=null) {
 				Integer remindStart = Integer.parseInt(map.get("remindstart").toString());
-				c.setTime(new Date()); 
+				c.setTime(new Date());
 				c.add(Calendar.DAY_OF_MONTH,remindStart);
 				remindStartDate = c.getTime();
 				map.put("remindstart", sdf.format(remindStartDate));
@@ -226,16 +224,16 @@ public class ShangpinController {
 		int count = shangpinService.selectCount(wrapper);
 		return R.ok().put("count", count);
 	}
-	
+
 	/**
-     * 前端智能排序
-     */
+	 * 前端智能排序
+	 */
 	@IgnoreAuth
-    @RequestMapping("/autoSort")
-    public R autoSort(@RequestParam Map<String, Object> params,ShangpinEntity shangpin, HttpServletRequest request,String pre){
-        EntityWrapper<ShangpinEntity> ew = new EntityWrapper<ShangpinEntity>();
-        Map<String, Object> newMap = new HashMap<String, Object>();
-        Map<String, Object> param = new HashMap<String, Object>();
+	@RequestMapping("/autoSort")
+	public R autoSort(@RequestParam Map<String, Object> params, ShangpinEntity shangpin, HttpServletRequest request, String pre) {
+		Map<String, Object> newMap = new HashMap<>();
+		Map<String, Object> param = new HashMap<>();
+
 		Iterator<Map.Entry<String, Object>> it = param.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<String, Object> entry = it.next();
@@ -250,10 +248,11 @@ public class ShangpinController {
 			}
 		}
 		params.put("sort", "clicktime");
-        params.put("order", "desc");
-		PageUtils page = shangpinService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, shangpin), params), params));
-        return R.ok().put("data", page);
-    }
+		params.put("order", "desc");
+
+		PageUtils page = getPageUtils(params, shangpin);
+		return R.ok().put("data", page);
+	}
 
 
 }

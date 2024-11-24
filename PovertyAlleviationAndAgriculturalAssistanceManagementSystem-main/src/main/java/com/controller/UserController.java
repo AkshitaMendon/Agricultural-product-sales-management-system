@@ -2,35 +2,20 @@
 package com.controller;
 
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.entity.TokenEntity;
 import com.entity.UserEntity;
 import com.service.TokenService;
 import com.service.UserService;
-import com.utils.CommonUtil;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
 import com.utils.R;
-import com.utils.ValidatorUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * 登录相关
@@ -149,24 +134,26 @@ public class UserController{
         return R.ok();
     }
 
-    /**
-     * 修改
-     */
-    @RequestMapping("/update")
-    public R update(@RequestBody UserEntity user){
-//        ValidatorUtils.validateEntity(user);
-    	UserEntity u = userService.selectOne(new EntityWrapper<UserEntity>().eq("username", user.getUsername()));
-    	if(u!=null && u.getId()!=user.getId() && u.getUsername().equals(user.getUsername())) {
-    		return R.error("用户名已存在。");
-    	}
-        userService.updateById(user);//全部更新
-        return R.ok();
-    }
+	@RequestMapping("/update")
+	public R update(@RequestBody UserEntity user) {
+		// Validate entity or perform other necessary checks
+		UserEntity u = userService.selectOne(new EntityWrapper<UserEntity>().eq("username", user.getUsername()));
 
-    /**
-     * 删除
-     */
-    @RequestMapping("/delete")
+		// Decompose the complex conditional
+		boolean isUserValid = (u != null);
+		boolean isDifferentUser = (isUserValid && u.getId() != user.getId());
+		boolean isUsernameConflict = (isUserValid && u.getUsername().equals(user.getUsername()));
+
+		// Check if username already exists
+		if (isUsernameConflict && isDifferentUser) {
+			return R.error("用户名已存在。");
+		}
+
+		userService.updateById(user); // 全部更新
+		return R.ok();
+	}
+
+	@RequestMapping("/delete")
     public R delete(@RequestBody Long[] ids){
         userService.deleteBatchIds(Arrays.asList(ids));
         return R.ok();
