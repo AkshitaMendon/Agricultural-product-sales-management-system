@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
+import com.baomidou.mybatisplus.plugins.Page;
 import com.utils.ValidatorUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,9 +62,9 @@ public class AixinjuanzengController {
 		if(tableName.equals("yonghu")) {
 			aixinjuanzeng.setZhanghao((String)request.getSession().getAttribute("username"));
 		}
-        EntityWrapper<AixinjuanzengEntity> ew = new EntityWrapper<AixinjuanzengEntity>();
-		PageUtils page = aixinjuanzengService.queryPage(params, MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, aixinjuanzeng), params), params));
-
+        EntityWrapper<AixinjuanzengEntity> ew = new EntityWrapper<>();
+        MPUtil.sort(MPUtil.between(MPUtil.likeOrEq(ew, aixinjuanzeng), params), params);
+        PageUtils page = aixinjuanzengService.queryPage(params, ew);
         return R.ok().put("data", page);
     }
     

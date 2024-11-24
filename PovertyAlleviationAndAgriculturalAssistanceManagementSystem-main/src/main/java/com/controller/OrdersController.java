@@ -48,6 +48,7 @@ import com.utils.CommonUtil;
 public class OrdersController {
     @Autowired
     private OrdersService ordersService;
+    private static final int RANDOM_UPPER_BOUND=1000;
     
 
 
@@ -123,8 +124,10 @@ public class OrdersController {
      */
     @RequestMapping("/save")
     public R save(@RequestBody OrdersEntity orders, HttpServletRequest request){
-    	orders.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
-    	//ValidatorUtils.validateEntity(orders);
+        orders.setId(new Date().getTime() + new Double(Math.floor(Math.random() * RANDOM_UPPER_BOUND)).longValue());
+
+
+        //ValidatorUtils.validateEntity(orders);
     	orders.setUserid((Long)request.getSession().getAttribute("userId"));
         ordersService.insert(orders);
         return R.ok();
@@ -135,7 +138,8 @@ public class OrdersController {
      */
     @RequestMapping("/add")
     public R add(@RequestBody OrdersEntity orders, HttpServletRequest request){
-    	orders.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
+        orders.setId(new Date().getTime() + new Double(Math.floor(Math.random() * RANDOM_UPPER_BOUND)).longValue());
+        ;
     	//ValidatorUtils.validateEntity(orders);
         ordersService.insert(orders);
         return R.ok();

@@ -48,6 +48,12 @@ import com.utils.CommonUtil;
 public class NewsController {
     @Autowired
     private NewsService newsService;
+
+    private static final int RANDOM_UPPER_BOUND = 1000; // Extracted as a constant for clarity
+
+    private long generateUniqueId() {
+        return new Date().getTime() + (long) Math.floor(Math.random() * RANDOM_UPPER_BOUND);
+    }
     
 
 
@@ -122,7 +128,7 @@ public class NewsController {
      */
     @RequestMapping("/save")
     public R save(@RequestBody NewsEntity news, HttpServletRequest request){
-    	news.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
+        news.setId(generateUniqueId());
     	//ValidatorUtils.validateEntity(news);
         newsService.insert(news);
         return R.ok();
@@ -133,7 +139,7 @@ public class NewsController {
      */
     @RequestMapping("/add")
     public R add(@RequestBody NewsEntity news, HttpServletRequest request){
-    	news.setId(new Date().getTime()+new Double(Math.floor(Math.random()*1000)).longValue());
+        news.setId(generateUniqueId());
     	//ValidatorUtils.validateEntity(news);
         newsService.insert(news);
         return R.ok();

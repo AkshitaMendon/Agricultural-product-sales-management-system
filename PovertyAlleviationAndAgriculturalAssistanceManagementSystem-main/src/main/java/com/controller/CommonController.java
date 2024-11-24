@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,7 +82,7 @@ public class CommonController{
 			client.setConnectionTimeoutInMillis(2000);
 			client.setSocketTimeoutInMillis(60000);
 		}
-		JSONObject res = null;
+		org.json.JSONObject res = null;
 		try {
 			File file1 = new File(ResourceUtils.getFile("classpath:static/upload").getAbsolutePath()+"/"+face1);
 			File file2 = new File(ResourceUtils.getFile("classpath:static/upload").getAbsolutePath()+"/"+face2);
