@@ -41,7 +41,7 @@ import com.utils.CommonUtil;
 public class ShangpinController {
     @Autowired
     private ShangpinService shangpinService;
-	private static final int RANDOM_MULTIPLIER=1000;
+	private static final String ID_PREFIX="SP_";
 
 	private PageUtils getPageUtils(Map<String, Object> params, ShangpinEntity shangpin) {
 		EntityWrapper<ShangpinEntity> ew = new EntityWrapper<ShangpinEntity>();
@@ -142,30 +142,15 @@ public class ShangpinController {
     /**
      * 后端保存
      */
-	@RequestMapping("/save")
-	public R save(@RequestBody ShangpinEntity shangpin, HttpServletRequest request) {
-		shangpin.setId(generateUniqueId());
+	@RequestMapping({"/save", "/add"})
+	public R saveOrUpdate(@RequestBody ShangpinEntity shangpin, HttpServletRequest request) {
+		shangpin.setId(Long.valueOf(generateUniqueId()));
 		shangpinService.insert(shangpin);
 		return R.ok();
 	}
 
-	/**
-	 * 前端保存
-	 */
-	@RequestMapping("/add")
-	public R add(@RequestBody ShangpinEntity shangpin, HttpServletRequest request) {
-		shangpin.setId(generateUniqueId());
-		shangpinService.insert(shangpin);
-		return R.ok();
-	}
-
-    /**
-     * 修改
-     */
-	private Long generateUniqueId() {
-		long currentTime = new Date().getTime();
-		double randomValue = Math.floor(Math.random() * RANDOM_MULTIPLIER);
-		return currentTime + new Double(randomValue).longValue();
+	private String generateUniqueId() {
+		return ID_PREFIX + UUID.randomUUID().toString();
 	}
     
 
